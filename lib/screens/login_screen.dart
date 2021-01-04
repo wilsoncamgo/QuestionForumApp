@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:questionforum/models/user.dart';
 import 'package:questionforum/screens/common_widgets/button.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert' as convert;
+import 'dart:convert';
 import 'dart:async';
+
+import 'package:questionforum/screens/common_widgets/logo.dart';
+import 'package:questionforum/screens/menu_screeen.dart';
+import 'package:questionforum/screens/name_setup.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -12,31 +16,41 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
+  String id;
   //
+  Future<User> fetchUserbyId(String id) async {
+    final response =
+        await http.get('http://askansproject.herokuapp.com/users/$id');
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+      if (data.isNotEmpty) {
+        return User.fromJson(data[0]);
+      }
+      return null;
+    } else {
+      throw Exception('Failed to load user');
+    }
+  }
+
+/*
   getUserName(String userId) async {
     var headers = {'Content-Type': 'application/x-www-form-urlencoded'};
-    var request =
-        http.Request('GET', Uri.parse('http://askansproject.herokuapp.com/users/finder/'));
+    var request = http.Request(
+        'GET', Uri.parse('http://askansproject.herokuapp.com/users/'));
     request.bodyFields = {'id': userId};
     request.headers.addAll(headers);
     http.StreamedResponse responseStream = await request.send();
 
     if (responseStream.statusCode == 200) {
       var response = await http.Response.fromStream(responseStream);
-      final Map parsed = convert.json.decode(response.body[0]); 
-      User user= User.fromMap(parsed);
+      final Map parsed = convert.json.decode(response.body[0]);
+      User user = User.fromMap(parsed);
       print(user.name);
     } else {
       print(responseStream.reasonPhrase);
     }
   }
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    getUserName("1000948840");
-  }
+*/
 
   @override
   Widget build(BuildContext context) {
@@ -44,53 +58,98 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Container(
         child: Form(
           key: _formKey,
-          child: Column(children: <Widget>[
-            TextFormField(
-              cursorColor: Colors.black,
-              decoration: new InputDecoration(
-                  border: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  errorBorder: InputBorder.none,
-                  disabledBorder: InputBorder.none,
-                  contentPadding:
-                      EdgeInsets.only(left: 15, bottom: 11, top: 11, right: 15),
-                  hintText: "Ingresa tu nombre"),
-              validator: (value) {
-                if (value.isEmpty) {
-                  return 'Please enter some text';
-                }
-                return null;
-              },
-            ),
-            TextFormField(
-              cursorColor: Colors.black,
-              decoration: new InputDecoration(
-                  border: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  errorBorder: InputBorder.none,
-                  disabledBorder: InputBorder.none,
-                  contentPadding:
-                      EdgeInsets.only(left: 15, bottom: 11, top: 11, right: 15),
-                  hintText: "Ingresa tu identificacion"),
-              validator: (value) {
-                if (value.isEmpty) {
-                  return 'Please enter some text';
-                }
-                return null;
-              },
-            ),
-            DefaultButton(
-              contentText: "Ingresa o Registrate",
-              onPressed: () {
-                if (_formKey.currentState.validate()) {
-                  //Valid information
-                  //First HTTP request
-                }
-              },
-            ),
-          ]),
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Logo(),
+                FractionallySizedBox(
+                  widthFactor: 0.5,
+                  alignment: Alignment.center,
+                  child: TextFormField(
+                    cursorColor: Colors.black,
+                    decoration: new InputDecoration(
+                        border: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        contentPadding: EdgeInsets.only(
+                            left: 15, bottom: 11, top: 11, right: 15),
+                        hintText: "Ingresa tu identificacion"),
+                    validator: (value) {
+                      if (value.isEmpty) {
+                        return 'Por favor coloca tu identificación para continuar';
+                      }
+                      return null;
+                    },
+                    onSaved: (newValue) {
+                      this.id = newValue;
+                    },
+                  ),
+                ),
+                Container(
+                  child: InkWell(
+                    onTap: () async {
+                      if (_formKey.currentState.validate()) {
+                        _formKey.currentState.save();
+                        User user = await fetchUserbyId(this.id);
+                        if (user != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MenuScreen(),
+                            ),
+                          );
+                        } else {
+                          User user = new User(id: this.id);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => NameSetup(
+                                user: user,
+                              ),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    child: Icon(
+                      Icons.arrow_forward_ios,
+                      size: 50,
+                    ),
+                  ),
+                ),
+                /*
+                DefaultButton(
+                  contentText: "Ingresa o Registrate",
+                  onPressed: () {
+                    if (_formKey.currentState.validate()) {
+                      //Valid information
+                      //First HTTP request
+                    }
+                  },
+                ),
+                TextFormField(
+                  cursorColor: Colors.black,
+                  decoration: new InputDecoration(
+                      border: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.only(
+                          left: 15, bottom: 11, top: 11, right: 15),
+                      hintText: "Ingresa tu nombre"),
+                  validator: (value) {
+                    if (value.isEmpty) {
+                      return 'Por favor coloca tu nombre para continuar';
+                    }
+                    return null;
+                  },
+                ),
+                */
+              ]),
         ),
       ),
     );
