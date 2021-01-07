@@ -9,6 +9,8 @@ import 'package:questionforum/screens/common_widgets/logo.dart';
 import 'package:provider/provider.dart';
 
 import 'package:questionforum/screens/create_question.dart';
+import 'package:questionforum/screens/profile_general_view.dart';
+import 'package:questionforum/screens/question_detail.dart';
 
 class MenuScreen extends StatefulWidget {
   MenuScreen({Key key}) : super(key: key);
@@ -28,7 +30,38 @@ class _MenuScreenState extends State<MenuScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<UserService>().getUser;
+    String authorName = "";
+    showAlertDialog(BuildContext context) {
+      // set up the buttons
+      Widget cancelButton = FlatButton(
+        child: Text("Regresar"),
+        onPressed: () => Navigator.pop(context),
+      );
+      Widget continueButton = FlatButton(
+        child: Text("Cerrar Sesión"),
+        onPressed: () {
+          context.read<UserService>().dispose();
+          Navigator.popUntil(context, ModalRoute.withName('/'));
+        },
+      );
+      // set up the AlertDialog
+      AlertDialog alert = AlertDialog(
+        title: Text("Saliendo de tu cuenta"),
+        content: Text("Deseas cerrar sesión?"),
+        actions: [
+          cancelButton,
+          continueButton,
+        ],
+      );
+      // show the dialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return alert;
+        },
+      );
+    }
+
     return FutureBuilder<List<Topic>>(
       future: this._apiService.fetchTopics(),
       builder: (context, snapshot) {
@@ -38,6 +71,12 @@ class _MenuScreenState extends State<MenuScreen> {
             child: Scaffold(
               appBar: AppBar(
                 title: Logo(),
+                leading: Builder(builder: (BuildContext context) {
+                  return InkWell(
+                    onTap: () => showAlertDialog(context),
+                    child: Icon(Icons.arrow_back_ios),
+                  );
+                }),
                 bottom: PreferredSize(
                   preferredSize: Size.fromHeight(30.0),
                   child: TabBar(
@@ -53,6 +92,12 @@ class _MenuScreenState extends State<MenuScreen> {
                 ),
                 actions: [
                   InkWell(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProfileGeneralView(),
+                      ),
+                    ),
                     child: Icon(
                       Icons.menu,
                     ),
@@ -97,9 +142,43 @@ class _MenuScreenState extends State<MenuScreen> {
                               return ListView(
                                 children: snapshotTopics.data
                                     .map((question) => ListTile(
+                                          onTap: () => Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  QuestionDetail(
+                                                authorName: authorName,
+                                                question: question,
+                                              ),
+                                            ),
+                                          ),
                                           leading: Icon(Icons.question_answer),
                                           title: Text(question.question),
-                                          subtitle: Text('por: ' + user.name),
+                                          subtitle: FutureBuilder<User>(
+                                            future: context
+                                                .watch<UserService>()
+                                                .fetchUserbyId(question.userId),
+                                            builder: (context, snapshotAuthor) {
+                                              if (snapshotAuthor
+                                                      .connectionState ==
+                                                  ConnectionState.waiting) {
+                                                return Text(
+                                                    "Estamos cargando al autor de la pregunta");
+                                              }
+                                              if (snapshotAuthor.hasData) {
+                                                authorName =
+                                                    snapshotAuthor.data.name;
+                                                return Text("por: " +
+                                                    snapshotAuthor.data.name);
+                                              } else if (snapshotAuthor
+                                                  .hasError) {
+                                                return Text(
+                                                    "${snapshotAuthor.error}");
+                                              }
+                                              return Text(
+                                                  "por:  Autor Anonimo");
+                                            },
+                                          ),
                                           trailing:
                                               Icon(Icons.arrow_forward_ios),
                                         ))
@@ -113,8 +192,6 @@ class _MenuScreenState extends State<MenuScreen> {
                               child: Text(
                                   'Aun no hay ninguna pregunta, se el primero en hacer una!'),
                             );
-
-                            // By default, show a loading spinner.
                           },
                         ))
                     .toList(),
@@ -124,8 +201,6 @@ class _MenuScreenState extends State<MenuScreen> {
         } else if (snapshot.hasError) {
           return Text("${snapshot.error}");
         }
-
-        // By default, show a loading spinner.
         return FractionallySizedBox(
           heightFactor: 0.15,
           widthFactor: 0.3,

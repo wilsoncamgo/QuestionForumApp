@@ -10,8 +10,11 @@ class UserService {
   UserService();
 
   User get getUser => _user;
+  void dispose() {
+    this._user = null;
+  }
 
-  Future<User> fetchUserbyId(String id) async {
+  Future<User> fetchUserbyIdLogin(String id) async {
     final response =
         await http.get('http://askansproject.herokuapp.com/users/$id');
     if (response.statusCode == 200) {
@@ -19,6 +22,20 @@ class UserService {
       if (data.isNotEmpty) {
         _user = User.fromJson(data[0]);
         return _user;
+      }
+      return null;
+    } else {
+      throw Exception('Failed to load user');
+    }
+  }
+
+  Future<User> fetchUserbyId(String id) async {
+    final response =
+        await http.get('http://askansproject.herokuapp.com/users/$id');
+    if (response.statusCode == 200) {
+      List<dynamic> data = jsonDecode(response.body);
+      if (data.isNotEmpty) {
+        return User.fromJson(data[0]);
       }
       return null;
     } else {

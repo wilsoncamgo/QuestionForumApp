@@ -16,10 +16,13 @@ class MyApp extends StatelessWidget {
       create: (_) => UserService(),
       child: MaterialApp(
         title: 'Preguntando App',
+        initialRoute: '/',
+        routes: {
+          '/': (context) => OpenScreen(),
+        },
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        home: OpenScreen(),
       ),
     );
   }

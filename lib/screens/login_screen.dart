@@ -81,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         _formKey.currentState.save();
                         User user = await context
                             .read<UserService>()
-                            .fetchUserbyId(this.id);
+                            .fetchUserbyIdLogin(this.id);
                         if (user != null) {
                           Navigator.push(
                             context,

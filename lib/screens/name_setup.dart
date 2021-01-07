@@ -60,7 +60,10 @@ class NameSetup extends StatelessWidget {
                     _formKey.currentState.save();
                     int status =
                         await context.read<UserService>().createUser(user);
-                    if (status == 201) {
+                    User userRetrieved = await context
+                        .read<UserService>()
+                        .fetchUserbyIdLogin(user.id);
+                    if (status == 201 && userRetrieved != null) {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
