@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:questionforum/logic/user_service.dart';
 import 'package:questionforum/models/user.dart';
 import 'package:questionforum/screens/common_widgets/button.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'dart:async';
 
 import 'package:questionforum/screens/common_widgets/logo.dart';
 import 'package:questionforum/screens/menu_screeen.dart';
@@ -18,19 +17,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   String id;
   //
-  Future<User> fetchUserbyId(String id) async {
-    final response =
-        await http.get('http://askansproject.herokuapp.com/users/$id');
-    if (response.statusCode == 200) {
-      List<dynamic> data = jsonDecode(response.body);
-      if (data.isNotEmpty) {
-        return User.fromJson(data[0]);
-      }
-      return null;
-    } else {
-      throw Exception('Failed to load user');
-    }
-  }
 
 /*
   getUserName(String userId) async {
@@ -93,7 +79,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     onTap: () async {
                       if (_formKey.currentState.validate()) {
                         _formKey.currentState.save();
-                        User user = await fetchUserbyId(this.id);
+                        User user = await context
+                            .read<UserService>()
+                            .fetchUserbyId(this.id);
                         if (user != null) {
                           Navigator.push(
                             context,

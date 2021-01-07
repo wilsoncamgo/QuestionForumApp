@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 class Question {
   int id;
   String userId;
@@ -14,10 +16,9 @@ class Question {
         dateSumb: DateTime.parse(json['date_sumb']));
   }
   Map<String, dynamic> toJson() => {
-        'id': id,
         'user_id': userId,
-        'topic_id': topicId,
+        'topic_id': topicId.toString(),
         'question': question,
-        'date_sumb': dateSumb
+        'date_sumb': DateFormat("yyyy-MM-dd").format(dateSumb)
       };
 }
